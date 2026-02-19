@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Club | Python Seminar View</title>
+    <link rel="icon" type="image/png" href="icon_logo.png">
+    <style>
+        :root {
+            --bg-color: #020617;
+            --card-bg: #0f172a;
+            --text-main: #f8fafc;
+            --text-dim: #475569;
+            --accent: #38bdf8;
+            --easy-accent: #38bdf8;
+            --hard-accent: #f43f5e;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- BACKGROUND WATERMARKS --- */
+        body::before, body::after, .watermark-1, .watermark-2 {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-weight: 900;
+            color: rgba(56, 189, 248, 0.03);
+            z-index: -1;
+            user-select: none;
+        }
+        body::before { content: "{ }"; font-size: 25rem; top: -5%; left: -5%; transform: rotate(-15deg); }
+        body::after { content: "</>"; font-size: 20rem; bottom: -5%; right: -5%; transform: rotate(15deg); }
+        .watermark-1 { content: "if:"; font-size: 15rem; top: 10%; right: 10%; transform: rotate(10deg); position: fixed; }
+        .watermark-2 { content: "while:"; font-size: 12rem; bottom: 15%; left: 15%; transform: rotate(-20deg); position: fixed; }
+
+        /* Fullscreen Toggle Button */
+        #fs-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-dim);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 100;
+            transition: 0.3s;
+        }
+        #fs-btn:hover { background: var(--accent); color: var(--bg-color); }
+
+        #presentation-container {
+            background-color: var(--card-bg);
+            padding: 3.5rem;
+            border-radius: 28px;
+            box-shadow: 0 0 80px rgba(0,0,0,0.6);
+            width: 80%;
+            max-width: 850px;
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Animations */
+        @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-30px); } }
+        .animate-in { animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-out { animation: slideOut 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .timer-display { font-size: 3.5rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .question-box { font-size: 2.1rem; font-weight: 700; line-height: 1.3; margin-bottom: 30px; }
+        .code-snippet { background: #000; padding: 25px; border-radius: 14px; margin-bottom: 30px; color: #7dd3fc; font-family: 'Fira Code', monospace; font-size: 1.4rem; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .option { background: rgba(255,255,255,0.03); padding: 22px; border-radius: 12px; font-size: 1.25rem; border-left: 4px solid var(--text-dim); }
+        .progress-container { width: 100%; height: 10px; background: rgba(255,255,255,0.05); margin-top: 25px; border-radius: 5px; overflow: hidden; }
+        #progress-fill { height: 100%; width: 100%; background: var(--accent); transition: width 1s linear; }
+        .difficulty-indicator { padding: 5px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 800; background: rgba(255,255,255,0.05); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<button id="fs-btn" onclick="toggleFullScreen()">⛶ FULLSCREEN</button>
+
+<div class="watermark-1"></div>
+<div class="watermark-2"></div>
+
+<div id="presentation-container" class="animate-in">
+    <div id="intro">
+        <h1 style="color: var(--easy-accent); font-size: 3.5rem; margin-bottom: 10px;">Python Quiz</h1>
+        <p style="color: var(--text-dim); font-size: 1.2rem;">Automated Seminar Presentation</p>
+        <button onclick="startPresentation()" style="margin-top:40px; padding: 18px 50px; border-radius:10px; border:none; background:var(--easy-accent); color:#000; font-weight:bold; cursor:pointer; font-size: 1.1rem;">INITIALIZE DECK</button>
+    </div>
+
+    <div id="quiz-view" class="hidden">
+        <div class="header">
+            <div>
+                <span id="diff-tag" class="difficulty-indicator">EASY</span>
+                <div id="q-counter" style="margin-top:10px; font-weight:600; color:var(--text-dim);">Q 1 OF 20</div>
+            </div>
+            <div id="timer-text" class="timer-display">30</div>
+        </div>
+        <div id="q-text" class="question-box"></div>
+        <div id="code-box" class="code-snippet hidden"></div>
+        <div class="options-grid" id="options-area"></div>
+        <div class="progress-container">
+            <div id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="level-up" class="hidden" style="text-align:center;">
+        <h1 style="color: var(--hard-accent); font-size: 4.5rem; margin:0;">HARD MODE</h1>
+        <p style="font-size: 1.8rem; margin-top: 10px;">Phase 02: 40s Timers</p>
+    </div>
+
+    <div id="end-screen" class="hidden" style="text-align:center;">
+        <h1 style="color: var(--easy-accent); font-size: 3.5rem;">The End</h1>
+    </div>
+</div>
+
+<script>
+    // Fullscreen Logic
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            document.getElementById('fs-btn').innerText = "EXIT FULLSCREEN";
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+                document.getElementById('fs-btn').innerText = "⛶ FULLSCREEN";
+            }
+        }
+    }
+
+    const quizData = [
+        { q: "What is programming?", o: ["Playing games", "Giving instructions to a computer", "Fixing hardware", "Designing websites"] },
+        { q: "What is a variable used for?", o: ["To repeat code", "To store information", "To stop a program", "To delete data"] },
+        { q: "Which structure is used to make decisions?", o: ["Loop", "Variable", "If statement", "Print"] },
+        { q: "What does a loop do?", o: ["Makes decisions", "Repeats code", "Stores data", "Ends a program"] },
+        { q: "What will this print?", code: "score = 10\nif score >= 10:\n    print('You Win!')", o: ["Nothing", "You Lose", "You Win!", "Error"] },
+        { q: "What happens here?", code: "lives = 3\nwhile lives > 0:\n    print('Game running')", o: ["Prints once", "Prints 3 times", "Prints forever", "Gives error"] },
+        { q: "Which 3 control structures does every program use?", o: ["Variables, Print, Input", "Sequence, Selection, Iteration", "If, Score, Game", "Python, Code, Loop"] },
+        { q: "What is the correct way to create a variable in Python?", o: ["int score = 0", "score == 0", "score = 0", "create score = 0"] },
+        { q: "What does this line do?", code: "print('Hello')", o: ["Stores text", "Displays text on screen", "Repeats text", "Creates a variable"] },
+        { q: "Which is an example of selection?", o: ["while True:", "score = 5", "if lives == 0:", "print('Game Over')"] },
+        { q: "How many times will this loop run?", code: "lives = 3\nwhile lives > 0:\n    print('Playing')\n    lives = lives - 1", o: ["1", "2", "3", "Infinite"] },
+        { q: "What will this print?", code: "score = 7\nif score > 10:\n    print('Win')\nelse:\n    print('Keep Playing')", o: ["Win", "Keep Playing", "Nothing", "Error"] },
+        { q: "Which of these is iteration?", o: ["if score == 10:", "while game_running:", "score = 0", "print('Start')"] },
+        { q: "What will this code print?", code: "x = 2\ny = 3\nprint(x + y)", o: ["23", "5", "x + y", "Error"] },
+        { q: "What happens here?", code: "score = 10\nif score == 10:\n    print('Perfect')", o: ["Nothing", "Perfect", "Error", "10"] },
+        { q: "What is wrong with this code?", code: "if score = 10\n    print('Win')", o: ["Nothing", "Should use == not =", "Missing print", "Indentation error"] },
+        { q: "What will this print?", code: "count = 1\nwhile count < 4:\n    print(count)\n    count = count + 1", o: ["1", "123", "1234", "Infinite"] },
+        { q: "What happens if we remove 'count = count + 1'?", o: ["Prints once", "Prints 1,2,3", "Infinite loop", "Error"] },
+        { q: "In a game, which structure is MOST important to keep the game running?", o: ["Variable", "Print", "Loop", "If statement"] },
+        { q: "Which code correctly checks if a player has no lives left?", o: ["if lives = 0:", "if lives == 0:", "if lives > 0:", "while lives == 0:"] }
+    ];
+
+    let currentIdx = 0;
+    let timer;
+    let timeLeft;
+
+    function startPresentation() {
+        document.getElementById('intro').classList.add('hidden');
+        showSlide();
+    }
+
+    function showSlide() {
+        if (currentIdx === 16) {
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('level-up').classList.remove('hidden');
+            setTimeout(() => { currentIdx++; showSlide(); }, 5000);
+            return;
+        }
+
+        if (currentIdx >= quizData.length) {
+            document.getElementById('quiz-view').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            return;
+        }
+
+        const data = quizData[currentIdx];
+        const container = document.getElementById('presentation-container');
+        container.classList.remove('animate-out');
+        container.classList.add('animate-in');
+        document.getElementById('level-up').classList.add('hidden');
+        document.getElementById('quiz-view').classList.remove('hidden');
+
+        document.getElementById('q-counter').innerText = `Q ${currentIdx + 1} OF 20`;
+        document.getElementById('q-text').innerText = data.q;
+        document.getElementById('progress-fill').style.width = "100%";
+        
+        const tag = document.getElementById('diff-tag');
+        const themeColor = currentIdx < 16 ? "#38bdf8" : "#f43f5e";
+        tag.innerText = currentIdx < 16 ? "EASY" : "HARD";
+        tag.style.color = themeColor;
+        document.documentElement.style.setProperty('--accent', themeColor);
+
+        const codeBox = document.getElementById('code-box');
+        if (data.code) { codeBox.innerText = data.code; codeBox.classList.remove('hidden'); }
+        else { codeBox.classList.add('hidden'); }
+
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = '';
+        data.o.forEach((opt, i) => {
+            const char = String.fromCharCode(65 + i);
+            optionsArea.innerHTML += `<div class="option"><strong>${char}</strong> &nbsp; ${opt}</div>`;
+        });
+
+        timeLeft = currentIdx < 16 ? 25 : 35;
+        document.getElementById('timer-text').innerText = timeLeft;
+        setTimeout(() => { startCountdown(); }, 1000); 
+    }
+
+    function startCountdown() {
+        clearInterval(timer);
+        const totalTime = timeLeft;
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-text').innerText = timeLeft;
+            document.getElementById('progress-fill').style.width = (timeLeft / totalTime) * 100 + "%";
+            if (timeLeft <= 0) { clearInterval(timer); nextSlide(); }
+        }, 1000);
+    }
+
+    function nextSlide() {
+        document.getElementById('presentation-container').classList.add('animate-out');
+        setTimeout(() => { currentIdx++; showSlide(); }, 500);
+    }
+</script>
+
+</body>
+</html>
